@@ -1,7 +1,27 @@
+const https = require('https');
+const http = require('http');
 const WebSocket = require('ws');
 const Redis = require('ioredis');
 const cookie = require('cookie');
 const axios = require('axios');
+
+const fs = require('fs');
+
+const options = {
+    port: 8090
+}
+
+const prot = process.env.NODE_ENV === 'production' ? https : http;
+
+const ssv = prot.createServer({
+    cert: process.env.NODE_ENV === 'production' ? fs.readFileSync('/etc/letsencrypt/live/necodeo.com/fullchain.pem') : null,
+    key:process.env.NODE_ENV === 'production' ?  fs.readFileSync('/etc/letsencrypt/live/necodeo.com/privkey.pem') : null,
+});
+
+ssv.on('request', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(';)');
+});
 
 const sub = new Redis({
     port: 6379,
@@ -13,16 +33,24 @@ const pub = new Redis({
     host: "localhost",
 });
 
-const wss = new WebSocket.Server({ port: 8090 });
+const wss = new WebSocket.Server(options);
 
 // TODO: Add actions like: comment, upvote, downvote
 
 async function saveRating(sessionId, postId, value) {
     try {
-        const { data } = await axios.post(`http://paper-api.localhost/api/v1/posts/${postId}/rate`, {
+        if (!sessionId) { // not the place to check this
+            return false;
+        }
+
+        const { data } = await axios.post(`https://paper-api.necodeo.com/api/v1/posts/${postId}/rate`, {
             sessionId,
             value,
-        })
+        }, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        });
 
         return data;
     } catch (error) {
