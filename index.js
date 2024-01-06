@@ -33,6 +33,11 @@ const pub = new Redis({
     host: "localhost",
 });
 
+const redis = new Redis({
+    port: 6379,
+    host: "localhost",
+});
+
 const wss = new WebSocket.Server(options);
 
 // TODO: Add actions like: comment, upvote, downvote
@@ -64,17 +69,39 @@ wss.on('connection', (ws, req) => {
     ws.sessionId = cookies.sessionId;
 
     ws.on('message', async (message) => {
-        const { postId, value } = JSON.parse(message);
-
         const sessionId = ws.sessionId;
 
-        // Save rating in DB and get average
-        const data = await saveRating(sessionId, postId, value);
+        if (!sessionId) {
+            return;
+        }
 
-        pub.publish("RATINGS_AVERAGE", JSON.stringify({
-            postId,
-            average: data.average,
-        }));
+        try {
+            const msg = JSON.parse(message);
+
+            if (msg.type === 'UPDATE_POST_RATING') {
+                const rating = await saveRating(sessionId, msg.postId, msg.value);
+
+                pub.publish("RATINGS_AVERAGE", JSON.stringify({
+                    type: 'RATINGS_AVERAGE',
+                    postId: msg.postId,
+                    average: rating.average,
+                }));
+
+                redis.set(`RATINGS_AV:${msg.postId}`, `${rating.average}`);
+            }
+
+            if (msg.type === 'GET_POST_RATING') {
+                const result = await redis.get(`RATINGS_AV:${msg.postId}`);
+
+                ws.send(JSON.stringify({
+                    type: 'RATINGS_AVERAGE',
+                    postId: msg.postId,
+                    average: result,
+                }));
+            }
+        } catch (e) {
+            console.error(e);
+        }
     });
 });
 
