@@ -7,16 +7,21 @@ const axios = require('axios');
 
 const fs = require('fs');
 
-const options = {
-    port: 8090
-}
-
 const prot = process.env.NODE_ENV === 'production' ? https : http;
 
 const ssv = prot.createServer({
     cert: process.env.NODE_ENV === 'production' ? fs.readFileSync('/etc/letsencrypt/live/necodeo.com/fullchain.pem') : null,
     key:process.env.NODE_ENV === 'production' ?  fs.readFileSync('/etc/letsencrypt/live/necodeo.com/privkey.pem') : null,
 });
+
+let options = {};
+
+if (process.env.NODE_ENV === 'production') {
+    ssv.listen(8090);
+    options.server = ssv;
+} else {
+    options.port = 8090;
+}
 
 ssv.on('request', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
