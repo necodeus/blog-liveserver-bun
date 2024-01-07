@@ -45,8 +45,6 @@ const redis = new Redis({
 
 const wss = new WebSocket.Server(options);
 
-// TODO: Add actions like: comment, upvote, downvote
-
 async function saveRating(sessionId, postId, value) {
     try {
         if (!sessionId) { // not the place to check this
@@ -102,6 +100,43 @@ wss.on('connection', (ws, req) => {
                     type: 'RATINGS_AVERAGE',
                     postId: msg.postId,
                     average: result,
+                }));
+            }
+
+            if (msg.type === 'GET_POST_COMMENTS') {
+                // TODO: Get comments from API
+
+                ws.send(JSON.stringify({
+                    type: 'POST_COMMENTS',
+                    postId: msg.postId,
+                    comments: [
+                        {
+                            id: '123',
+                            author_name: 'Dawid',
+                            created_at: '2024-01-07 12:00:00',
+                            content: 'Hello',
+                            upvotes: 12,
+                            downvotes: 1,
+                            replies: [
+                                {
+                                    id: '112a',
+                                    author_name: 'Dawid',
+                                    created_at: '2023-05-01 12:00:00',
+                                    content: 'Test',
+                                    upvotes: 1,
+                                    downvotes: 0,
+                                },
+                                {
+                                    id: '112b',
+                                    author_name: 'Dawid',
+                                    created_at: '2023-05-01 12:00:00',
+                                    content: 'Testddd',
+                                    upvotes: 1,
+                                    downvotes: 22,
+                                },
+                            ],
+                        },
+                    ],
                 }));
             }
         } catch (e) {
