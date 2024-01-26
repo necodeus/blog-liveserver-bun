@@ -1,11 +1,15 @@
 {
+  "name": "blog-wss-bun",
+  "version": "1.0",
+  "main": "index.ts",
   "dependencies": {
-    "axios": "^1.6.3",
     "cookie": "^0.6.0",
-    "ioredis": "^5.3.2",
-    "ws": "^8.16.0"
+    "ioredis": "^5.3.2"
   },
-  "devDependencies": {
-    "@types/ws": "^8.5.10"
-  }
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "bun index.ts",
+    "start:production": "BLOG_API_URL=https://paper-api.necodeo.com TLS_KEY=/etc/letsencrypt/live/necodeo.com/fullchain.pem TLS_CERT=/etc/letsencrypt/live/necodeo.com/privkey.pem bun index.ts"
+  },
+  "type": "module"
 }
