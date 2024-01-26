@@ -11,7 +11,7 @@ const prot = process.env.NODE_ENV === 'production' ? https : http;
 
 const ssv = prot.createServer({
     cert: process.env.NODE_ENV === 'production' ? fs.readFileSync('/etc/letsencrypt/live/necodeo.com/fullchain.pem') : null,
-    key:process.env.NODE_ENV === 'production' ?  fs.readFileSync('/etc/letsencrypt/live/necodeo.com/privkey.pem') : null,
+    key: process.env.NODE_ENV === 'production' ? fs.readFileSync('/etc/letsencrypt/live/necodeo.com/privkey.pem') : null,
 });
 
 let options = {};
@@ -67,6 +67,29 @@ async function saveRating(sessionId, postId, value) {
     }
 }
 
+async function getComments(sessionId, postId) {
+    try {
+        if (!sessionId) {
+            return false;
+        }
+
+        const { data } = await axios.get(`http://paper-api.localhost/api/v1/posts/${postId}/comments`, {
+            sessionId,
+        }, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                // OR MAYBE PASS THE SESSION ID IN THE COOKIE?
+                // FOR NOW IT'S NOT NEEDED
+            },
+        });
+
+        return data;
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
+}
+
 wss.on('connection', (ws, req) => {
     const cookies = cookie.parse(req.headers.cookie || '');
     ws.sessionId = cookies.sessionId;
@@ -104,39 +127,12 @@ wss.on('connection', (ws, req) => {
             }
 
             if (msg.type === 'GET_POST_COMMENTS') {
-                // TODO: Get comments from API
+                const { comments } = await getComments(sessionId, msg.postId);
 
                 ws.send(JSON.stringify({
                     type: 'POST_COMMENTS',
                     postId: msg.postId,
-                    comments: [
-                        {
-                            id: '123',
-                            author_name: 'Dawid',
-                            created_at: '2024-01-07 12:00:00',
-                            content: 'Hello',
-                            upvotes: 12,
-                            downvotes: 1,
-                            replies: [
-                                {
-                                    id: '112a',
-                                    author_name: 'Dawid',
-                                    created_at: '2023-05-01 12:00:00',
-                                    content: 'Test',
-                                    upvotes: 1,
-                                    downvotes: 0,
-                                },
-                                {
-                                    id: '112b',
-                                    author_name: 'Dawid',
-                                    created_at: '2023-05-01 12:00:00',
-                                    content: 'Testddd',
-                                    upvotes: 1,
-                                    downvotes: 22,
-                                },
-                            ],
-                        },
-                    ],
+                    comments,
                 }));
             }
         } catch (e) {
