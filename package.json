@@ -1,5 +1,5 @@
 {
-  "name": "blog-wss-bun",
+  "name": "necodeo-wss-bun",
   "version": "1.0",
   "main": "index.ts",
   "dependencies": {
