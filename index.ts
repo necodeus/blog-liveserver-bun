@@ -1,5 +1,4 @@
 import cookie from 'cookie';
-import fs from 'fs';
 
 import { BunType, WebSocketWithData, DebugHTTPServer } from './types';
 import { clients } from './store';
@@ -11,16 +10,24 @@ import {
 import { broadcastOnClose, broadcastOnOpen } from './broadcasters';
 import { WEBSOCKET_PORT } from './config';
 
-const TLS_KEY = process.env.TLS_KEY || '';
-const TLS_CERT = process.env.TLS_CERT || '';
+const TLS_KEY = Bun.env.TLS_KEY || '';
+const TLS_CERT = Bun.env.TLS_CERT || '';
+
+const isSecure = TLS_KEY && TLS_CERT;
+
+if (isSecure) {
+    console.log('Configuring TLS...');
+    console.log('TLS_KEY=', TLS_KEY);
+    console.log('TLS_CERT=', TLS_CERT);
+}
 
 // @ts-ignore
 const server = Bun.serve({
     port: WEBSOCKET_PORT,
-    tls: {
-        key: TLS_KEY ? fs.readFileSync(TLS_KEY) : undefined,
-        cert: TLS_CERT ? fs.readFileSync(TLS_CERT) : undefined,
-    },
+    tls: isSecure ? {
+        cert: Bun.file(TLS_KEY),
+        key: Bun.file(TLS_CERT),
+    } : undefined,
     fetch(req: Request, server: DebugHTTPServer) {
         const cookies = cookie.parse(req.headers.get('Cookie') || '');
 
