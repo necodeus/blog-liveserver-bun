@@ -8,8 +8,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "bun run index.ts",
-    "start:production": "BLOG_API_URL=https://paper-api.necodeo.com TLS_KEY=/etc/letsencrypt/live/necodeo.com/fullchain.pem TLS_CERT=/etc/letsencrypt/live/necodeo.com/privkey.pem bun run index.ts"
+    "start": "bun run index.ts"
   },
   "type": "module"
 }
