@@ -6,11 +6,16 @@ import {
     getPostCommentsHandler,
     getPostRatingHandler,
     updatePostRatingHandler,
+    addCommentHandler,
+    upvoteCommentHandler,
+    downvoteCommentHandler,
 } from './events';
 import { broadcastOnClose, broadcastOnOpen } from './broadcasters';
 import { WEBSOCKET_PORT } from './config';
 
+// @ts-ignore
 const TLS_KEY = Bun.env.TLS_KEY || '';
+// @ts-ignore
 const TLS_CERT = Bun.env.TLS_CERT || '';
 
 const isSecure = TLS_KEY && TLS_CERT;
@@ -25,7 +30,9 @@ if (isSecure) {
 const server = Bun.serve({
     port: WEBSOCKET_PORT,
     tls: isSecure ? {
+        // @ts-ignore
         cert: Bun.file(TLS_KEY),
+        // @ts-ignore
         key: Bun.file(TLS_CERT),
     } : undefined,
     fetch(req: Request, server: DebugHTTPServer) {
@@ -76,6 +83,18 @@ const server = Bun.serve({
                 }
                 case 'GET_POST_COMMENTS': {
                     getPostCommentsHandler(ws, msg.postId);
+                    break;
+                }
+                case 'ADD_COMMENT': {
+                    addCommentHandler(ws, msg.postId, msg.commentId, msg.commentText);
+                    break;
+                }
+                case 'UPVOTE_COMMENT': {
+                    upvoteCommentHandler(ws, msg.postId, msg.commentId);
+                    break;
+                }
+                case 'DOWNVOTE_COMMENT': {
+                    downvoteCommentHandler(ws, msg.postId, msg.commentId);
                     break;
                 }
                 default: {

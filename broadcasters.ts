@@ -12,8 +12,6 @@ export const broadcastOnPostRatingChange: BroadcastOnPostRatingChangeType = (mes
     console.log(`Broadcasting on post rating change for post ${postId}`);
 
     clients.forEach((client) => {
-        console.log(client);
-
         if (client.data.currentPageId !== postId) {
             return;
         }

@@ -1,14 +1,25 @@
 import {
-    WebSocketWithData,
     GetPostCommentHandlerType,
     RatingsAverageHandlerType,
     SubscriberErrorHandlerType,
     SubscriberMessageHandlerType,
     UpdatePostRatingHandlerType,
+    GetPostRatingHandlerType,
+    AddCommentHandlerType,
+    UpvoteCommentHandlerType,
+    DownvoteCommentHandlerType,
 } from './types';
 import { redisClients } from './store';
 import { broadcastOnPostRatingChange } from './broadcasters';
-import { getComments, saveRating } from './blog/api';
+import {
+    // ratings
+    saveRating,
+    // comments
+    getComments,
+    addComment,
+    upvoteComment,
+    downvoteComment,
+} from './blog/api';
 
 export const subscriberErrorHandler: SubscriberErrorHandlerType = (error) => {
     if (error) {
@@ -29,6 +40,8 @@ export const subscriberMessageHandler: SubscriberMessageHandlerType = (channel, 
 }
 
 export const getPostCommentsHandler: GetPostCommentHandlerType = async (ws, postId) => {
+    console.log('GET_POST_COMMENTS', postId);
+
     const sessionId = ws.data.cookies.sessionId;
 
     const { comments } = await getComments(sessionId, postId);
@@ -40,9 +53,9 @@ export const getPostCommentsHandler: GetPostCommentHandlerType = async (ws, post
     }));
 }
 
-type GetPostRatingHandlerType = (ws: WebSocketWithData, postId: string) => Promise<void>;
-
 export const getPostRatingHandler: GetPostRatingHandlerType = async (ws, postId) => {
+    console.log('GET_POST_RATING', postId);
+
     const result = await redisClients.redis.get(`RATINGS_AV:${postId}`);
 
     ws.data.previousPageId = ws.data.currentPageId
@@ -56,6 +69,8 @@ export const getPostRatingHandler: GetPostRatingHandlerType = async (ws, postId)
 }
 
 export const updatePostRatingHandler: UpdatePostRatingHandlerType = async (ws, postId, value) => {
+    console.log('UPDATE_POST_RATING', postId, value);
+
     const sessionId = ws.data.cookies.sessionId;
 
     const rating = await saveRating(sessionId, postId, value);
@@ -67,4 +82,26 @@ export const updatePostRatingHandler: UpdatePostRatingHandlerType = async (ws, p
     }));
 
     redisClients.redis.set(`RATINGS_AV:${postId}`, `${rating?.average}`);
+}
+
+export const addCommentHandler: AddCommentHandlerType = async (ws, postId, commentId, commentText) => {
+    const sessionId = ws.data.cookies.sessionId;
+
+    await addComment(sessionId, postId, commentId, commentText);
+}
+
+export const upvoteCommentHandler: UpvoteCommentHandlerType = async (ws, postId, commentId) => {
+    console.log('UPVOTE_COMMENT', postId, commentId);
+
+    const sessionId = ws.data.cookies.sessionId;
+
+    await upvoteComment(sessionId, postId, commentId);
+}
+
+export const downvoteCommentHandler: DownvoteCommentHandlerType = async (ws, postId, commentId) => {
+    console.log('DOWNVOTE_COMMENT', postId, commentId);
+
+    const sessionId = ws.data.cookies.sessionId;
+
+    await downvoteComment(sessionId, postId, commentId);
 }

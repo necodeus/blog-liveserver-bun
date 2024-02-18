@@ -3,10 +3,16 @@ export type BroadcastOnCloseType = () => void;
 export type BroadcastOnOpenType = () => void;
 
 export type SubscriberErrorHandlerType = (error: any) => void;
-export type RatingsAverageHandlerType = (error: any) => void;
+export type RatingsAverageHandlerType  = (error: any) => void;
+
 export type SubscriberMessageHandlerType = (channel: string, message: string) => void;
-export type GetPostCommentHandlerType = (ws: WebSocketWithData, postId: string) => Promise<void>;
+
+export type GetPostCommentHandlerType   = (ws: WebSocketWithData, postId: string) => Promise<void>;
 export type UpdatePostRatingHandlerType = (ws: WebSocketWithData, postId: string, value: number) => Promise<void>;
+export type GetPostRatingHandlerType    = (ws: WebSocketWithData, postId: string) => Promise<void>;
+export type AddCommentHandlerType       = (ws: WebSocketWithData, postId: string, commentId: string, commentText: string) => Promise<void>;
+export type UpvoteCommentHandlerType    = (ws: WebSocketWithData, postId: string, commentId: string) => Promise<void>;
+export type DownvoteCommentHandlerType  = (ws: WebSocketWithData, postId: string, commentId: string) => Promise<void>;
 
 export type WebSocketWithData = WebSocket & {
     data: {
