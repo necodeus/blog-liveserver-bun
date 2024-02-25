@@ -20,6 +20,7 @@ const redisClients = {
 };
 
 redisClients.sub.subscribe("RATINGS_AVERAGE", ratingsAverageHandler);
+redisClients.sub.subscribe("COMMENTS", () => {});
 redisClients.sub.on("message", subscriberMessageHandler);
 redisClients.sub.on('error', subscriberErrorHandler);
 

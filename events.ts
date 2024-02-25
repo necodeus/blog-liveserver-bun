@@ -10,7 +10,12 @@ import {
     DownvoteCommentHandlerType,
 } from './types';
 import { redisClients } from './store';
-import { broadcastOnPostRatingChange } from './broadcasters';
+import {
+    // ratings
+    broadcastOnPostRatingChange,
+    // comments
+    broadcastOnComment,
+} from './broadcasters';
 import {
     // ratings
     saveRating,
@@ -34,8 +39,11 @@ export const ratingsAverageHandler: RatingsAverageHandlerType = (error) => {
 }
 
 export const subscriberMessageHandler: SubscriberMessageHandlerType = (channel, message) => {
-    if (channel === "RATINGS_AVERAGE") {
+    if (channel === 'RATINGS_AVERAGE') {
         broadcastOnPostRatingChange(message);
+    }
+    if (channel === 'COMMENTS') {
+        broadcastOnComment(message);
     }
 }
 
@@ -75,7 +83,7 @@ export const updatePostRatingHandler: UpdatePostRatingHandlerType = async (ws, p
 
     const rating = await saveRating(sessionId, postId, value);
 
-    redisClients.pub.publish("RATINGS_AVERAGE", JSON.stringify({
+    redisClients.pub.publish('RATINGS_AVERAGE', JSON.stringify({
         type: 'RATINGS_AVERAGE',
         postId,
         average: rating?.average,
@@ -88,6 +96,13 @@ export const addCommentHandler: AddCommentHandlerType = async (ws, postId, comme
     const sessionId = ws.data.cookies.sessionId;
 
     await addComment(sessionId, postId, commentId, commentText);
+
+    redisClients.pub.publish('COMMENTS', JSON.stringify({
+        type: 'COMMENTS',
+        postId,
+        commentId,
+        commentText,
+    }));
 }
 
 export const upvoteCommentHandler: UpvoteCommentHandlerType = async (ws, postId, commentId) => {

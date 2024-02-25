@@ -13,6 +13,32 @@ import {
 import { broadcastOnClose, broadcastOnOpen } from './broadcasters';
 import { WEBSOCKET_PORT } from './config';
 
+import { MeterProvider } from '@opentelemetry/sdk-metrics';
+import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
+
+const prometheusExporter = new PrometheusExporter({
+    port: 9464,
+}, () => {
+    console.log('Prometheus exporter is running on port 9464');
+});
+
+const meterProvider = new MeterProvider({});
+
+meterProvider.addMetricReader(prometheusExporter);
+
+const meter = meterProvider.getMeter('example-prometheus');
+
+const connectionsCounter = meter.createCounter('websocket_connections', {
+    description: 'Total number of WebSocket connections',
+});
+
+connectionsCounter.add(0);
+
+const activeConnectionsGauge = meter.createUpDownCounter('websocket_active_connections', {
+    description: 'Number of active WebSocket connections',
+});
+activeConnectionsGauge.add(0);
+
 // @ts-ignore
 const TLS_KEY = Bun.env.TLS_KEY || '';
 // @ts-ignore
@@ -53,13 +79,14 @@ const server = Bun.serve({
     websocket: {
         open(ws: WebSocketWithData) {
             clients.add(ws);
-
+            connectionsCounter.add(1);
+            activeConnectionsGauge.add(1);
             broadcastOnOpen();
         },
 
         close(ws: WebSocketWithData) {
             clients.delete(ws);
-
+            activeConnectionsGauge.add(-1);
             broadcastOnClose()
         },
 
